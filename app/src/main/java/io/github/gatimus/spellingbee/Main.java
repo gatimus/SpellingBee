@@ -99,7 +99,7 @@ public class Main extends ActionBarActivity {
 
     public void showWord(View view) {
         if(!tts.isSpeaking()) {
-            String wd = myService.getWord();
+            String wd = myService.getRandomWord();
             TextView myTextView = (TextView) findViewById(R.id.myTextView);
             myTextView.setText(wd);
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
