@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/speech"
+        android:key="pref_speech">
+
+
+    </PreferenceCategory>
+
+    <ListPreference
+        android:title="@string/difficulty"
+        android:key="pref_difficulty">
+        </ListPreference>
+
+    <ListPreference
+        android:title="@string/theme"
+        android:key="pref_theme">
+        </ListPreference>
+
+
+</PreferenceScreen>
