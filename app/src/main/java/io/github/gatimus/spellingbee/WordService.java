@@ -7,21 +7,16 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import com.wordnik.client.api.WordsApi;
+import com.wordnik.client.common.ApiException;
+import com.wordnik.client.model.WordObject;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.concurrent.ExecutionException;
 
 public class WordService extends Service {
 
     final static String TAG = "WordService:";
+    final static String KEY = ""; //TODO
     private final IBinder myBinder = new MyLocalBinder();
     private String myWords[] = new String[100];
     private int currInd=0,maxInd=3;
@@ -47,9 +42,9 @@ public class WordService extends Service {
     public String getRandomWord() {
         RandomWord randomWord = new RandomWord();
         String word = "";
-        randomWord.execute("http://randomword.setgetgo.com/get.php");
+        //randomWord.execute(KEY);
         try {
-            word = randomWord.get();
+            word = randomWord.get().getWord();
         } catch (InterruptedException e) {
             Log.e(TAG, e.toString());
         } catch (ExecutionException e) {
@@ -65,58 +60,46 @@ public class WordService extends Service {
         }
     }
 
-    public class RandomWord extends AsyncTask<String, Integer, String> {
+    public class RandomWord extends AsyncTask<Void, Integer, WordObject> {
 
         public String word;
+        private WordsApi wordsApi;
+
 
         @Override
         protected void onPreExecute() {
             Log.v(TAG, "PreExecute");
             word = "";
+            wordsApi = new WordsApi();
             super.onPreExecute();
         } //onPreExecute
 
         @Override
-        protected String doInBackground(String... urls) {
+        protected WordObject doInBackground(Void... prams) {
             Log.v(TAG, "doInBackground");
             publishProgress(0);
-            String result = "";
-            HttpClient client = new DefaultHttpClient();
-            HttpGet httpGet = new HttpGet(urls[0]);
+            wordsApi.addHeader("api_key", KEY);
+            WordObject wordObject = new WordObject();
             try {
-                HttpResponse response = client.execute(httpGet);
-                StatusLine statusLine = response.getStatusLine();
-                int statusCode = statusLine.getStatusCode();
-                Log.i(TAG, String.valueOf(statusCode));
-                if (statusCode == 200) {
-                    HttpEntity entity = response.getEntity();
-                    InputStream content = entity.getContent();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 8);
-                    StringBuilder sb = new StringBuilder();
-                    String line = null;
-                    while ((line = reader.readLine()) != null)
-                    {
-                        sb.append(line + "\n");
-                    }
-                    result = sb.toString();
-                    Log.v(TAG, result);
-                }
+                wordObject = wordsApi.getRandomWord(null, null, "false", 0, -1, 0, -1, 0 , -1);
+            } catch (ApiException e) {
+                Log.e(TAG, e.toString());
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
             }
             publishProgress(100);
-            return result;
+            return wordObject;
         } //doInBackground
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
-            Log.v(TAG, "ProgressUpdate" + String.valueOf(progress[0]));
+            Log.v(TAG, "ProgressUpdate" + String.valueOf(progress[0].intValue()));
         } //onProgressUpdate
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(WordObject result) {
             Log.v(TAG, "PostExecute");
-            word = result;
+            word = result.getWord();
             Log.v(TAG, word);
             super.onPostExecute(result);
         } //onPostExecute
