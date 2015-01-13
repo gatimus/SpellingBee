@@ -6,43 +6,48 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-
 import com.wordnik.client.api.WordsApi;
 import com.wordnik.client.common.ApiException;
 import com.wordnik.client.model.WordObject;
-
 import java.util.concurrent.ExecutionException;
 
 public class WordService extends Service {
 
-    final static String TAG = "WordService:";
-    final static String KEY = ""; //TODO
-    private final IBinder myBinder = new MyLocalBinder();
-    private String myWords[] = new String[100];
-    private int currInd=0,maxInd=3;
+    private final static String TAG = "WordService";
+    private final static String KEY = ""; //TODO
+
+    private final IBinder wordServiceBinder = new WordServiceLocalBinder();
+    private RandomWord randomWord;
+    private WordsApi wordsApi;
+
+    public String word;
 
     public WordService() {
-        myWords[0] = "House";
-        myWords[1] = "Car";
-        myWords[2] = "Door";
-        myWords[3] = "Barn";
-    }
+        Log.v(TAG, "construct");
+        randomWord = new RandomWord();
+        wordsApi = new WordsApi();
+        wordsApi.addHeader("api_key", KEY);
+        word = "";
+    } //constructor
 
     @Override
     public IBinder onBind(Intent arg0) {
-        return myBinder;
-    }
+        Log.v(TAG, "onBind");
+        return wordServiceBinder;
+    } //onBind
 
-    public String getWord() {
-        if (currInd > 3)
-            currInd = 0;
-        return myWords[currInd++];
-    }
+    public class WordServiceLocalBinder extends Binder {
+        private final static String TAG = "WordServiceLocalBinder";
+        WordService getService() {
+            Log.v(TAG, "getService");
+            return WordService.this;
+        } //getService
+    } //class MyLocalBinder
 
     public String getRandomWord() {
-        RandomWord randomWord = new RandomWord();
-        String word = "";
-        //randomWord.execute(KEY);
+        Log.v(TAG, "getRandomWord");
+        randomWord = new RandomWord();
+        randomWord.execute();
         try {
             word = randomWord.get().getWord();
         } catch (InterruptedException e) {
@@ -52,57 +57,65 @@ public class WordService extends Service {
         }
         Log.v(TAG, word);
         return word;
-    }
+    } //getRandomWord
 
-    public class MyLocalBinder extends Binder {
-        WordService getService() {
-            return WordService.this;
-        }
-    }
+    public boolean cancelGetRandomWord(){
+        Log.v(TAG, "cancelGetRandomWord");
+        randomWord.cancel(true);
+        return randomWord.isCancelled();
+    } //cancelGetRandomWord
 
-    public class RandomWord extends AsyncTask<Void, Integer, WordObject> {
+    public class RandomWord extends AsyncTask<Void, String, WordObject> {
 
-        public String word;
-        private WordsApi wordsApi;
-
+        private final static String TAG = "RandomWord";
 
         @Override
         protected void onPreExecute() {
             Log.v(TAG, "PreExecute");
             word = "";
-            wordsApi = new WordsApi();
             super.onPreExecute();
         } //onPreExecute
 
         @Override
         protected WordObject doInBackground(Void... prams) {
             Log.v(TAG, "doInBackground");
-            publishProgress(0);
-            wordsApi.addHeader("api_key", KEY);
+            publishProgress("start");
             WordObject wordObject = new WordObject();
             try {
-                wordObject = wordsApi.getRandomWord(null, null, "false", 0, -1, 0, -1, 0 , -1);
+                wordObject = wordsApi.getRandomWord(null, null, "true", 1_000_000, -1, 1, -1, 0, 5);
             } catch (ApiException e) {
                 Log.e(TAG, e.toString());
+                publishProgress(e.toString());
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
+                publishProgress(e.toString());
             }
-            publishProgress(100);
+            publishProgress("finish");
             return wordObject;
         } //doInBackground
 
         @Override
-        protected void onProgressUpdate(Integer... progress) {
-            Log.v(TAG, "ProgressUpdate" + String.valueOf(progress[0].intValue()));
+        protected void onProgressUpdate(String... values) {
+            Log.i(TAG, "ProgressUpdate " + values[0]);
         } //onProgressUpdate
+
+        @Override
+        protected void onCancelled (WordObject result){
+            Log.v(TAG, "Cancelled");
+            try {
+                word = result.getWord();
+            } catch (NullPointerException e) {
+                Log.e(TAG, e.toString());
+            }
+        } //onCancelled
 
         @Override
         protected void onPostExecute(WordObject result) {
             Log.v(TAG, "PostExecute");
             word = result.getWord();
-            Log.v(TAG, word);
             super.onPostExecute(result);
         } //onPostExecute
 
     } //class RandomWord
-}
+
+} //class

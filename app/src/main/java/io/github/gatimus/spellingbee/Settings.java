@@ -8,12 +8,12 @@ import android.util.Log;
 
 public class Settings extends PreferenceActivity {
 
-    private static final String TAG = "Settings:";
+    private static final String TAG = "Settings";
     private FragmentManager fragMan;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.v(TAG, "Create Activity");
+        Log.v(TAG, "Create");
         super.onCreate(savedInstanceState);
         fragMan = this.getFragmentManager();
         fragMan.beginTransaction().replace(android.R.id.content, new SettingsFragment()).commit();
@@ -21,13 +21,15 @@ public class Settings extends PreferenceActivity {
 
     public static class SettingsFragment extends PreferenceFragment {
 
+        private static final String TAG = "SettingsFragment";
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
-            Log.v(TAG, "Create Fragment");
+            Log.v(TAG, "Create");
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);
         } //onCreate
 
-    } //inner class
+    } //class SettingsFragment
 
 } //class

@@ -23,15 +23,13 @@ import java.util.Locale;
 
 public class Main extends ActionBarActivity {
 
-    private static final String TAG = "Main:";
-    WordService myService;
+    private static final String TAG = "Main";
+    private WordService wordService;
     private Resources res;
     private FragmentManager fragMan;
     private DialogFragment about;
     private DialogFragment help;
     private TextToSpeech tts;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,28 +53,30 @@ public class Main extends ActionBarActivity {
         }
         setContentView(R.layout.main_layout);
         Intent intent = new Intent(this,WordService.class);
-        bindService(intent, myConnection, Context.BIND_AUTO_CREATE);
+        bindService(intent, wordServiceConnection, Context.BIND_AUTO_CREATE);
     } //onCreate
 
     @Override
     public void onPause(){
+        Log.v(TAG, "Pause");
         if(tts !=null){
             tts.stop();
             tts.shutdown();
         }
+        wordService.cancelGetRandomWord();
         super.onPause();
-    }
+    } //onPause
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.v(TAG, "Create Options Menu");
+        Log.v(TAG, "CreateOptionsMenu");
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     } //onCreateOptionsMenu
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i(TAG, item.getTitle().toString() + "Selected");
+        Log.i(TAG, item.getTitle().toString() + " Selected");
         int id = item.getItemId();
         switch(id){
             case R.id.action_settings :
@@ -98,29 +98,33 @@ public class Main extends ActionBarActivity {
     } //onOptionsItemSelected
 
     public void showWord(View view) {
+        Log.v(TAG, "showWord");
         if(!tts.isSpeaking()) {
-            String wd = myService.getRandomWord();
+            String wd = wordService.getRandomWord();
             TextView myTextView = (TextView) findViewById(R.id.myTextView);
             myTextView.setText(wd);
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 tts.speak(wd, TextToSpeech.QUEUE_FLUSH, null);
             } else {
                 tts.speak(wd, TextToSpeech.QUEUE_FLUSH, null, "speak");
-            }
-        }
+            } //if else
+        } //if
     } //showWord
 
-    private ServiceConnection myConnection = new ServiceConnection() {
+    private ServiceConnection wordServiceConnection = new ServiceConnection() {
+
+        private static final String TAG = "wordServiceConnection";
 
         public void onServiceConnected(ComponentName className, IBinder service) {
-            WordService.MyLocalBinder binder = (WordService.MyLocalBinder) service;
-            myService = binder.getService();
-        }
+            Log.v(TAG, "ServiceConnected");
+            WordService.WordServiceLocalBinder binder = (WordService.WordServiceLocalBinder) service;
+            wordService = binder.getService();
+        } //onServiceConnected
 
         public void onServiceDisconnected(ComponentName arg0) {
-
-        }
+            Log.v(TAG, "ServiceDisconnected");
+        } //onServiceDisconnected
 
     };
 
-}
+} //class
