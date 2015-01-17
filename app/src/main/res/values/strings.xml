@@ -8,8 +8,14 @@
     <string name="action_help">Help</string>
     <string name="action_quit">Quit</string>
 
-    <string name="msg_about">About body</string>
-    <string name="msg_help">Help body</string>
+    <string name="msg_about">
+        About body <!--TODO-->
+    </string>
+    <string name="msg_help">
+        \'Score: x\' - x is the number of words you guessed correct
+        \'Say Word\' - speaks the word again
+        \'Give Up\' - <!--TODO-->
+    </string>
 
     <string name="speech">Speech</string>
     <string name="difficulty">Difficulty</string>

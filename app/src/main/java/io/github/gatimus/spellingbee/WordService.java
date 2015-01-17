@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 public class WordService extends Service {
 
     private final static String TAG = "WordService";
-    private final static String KEY = ""; //TODO
+    private final static String KEY = "03f2cf8c42306121b91591ef5730891f698fbc554e66ee9af";
 
     private final IBinder wordServiceBinder = new WordServiceLocalBinder();
     private RandomWord randomWord;

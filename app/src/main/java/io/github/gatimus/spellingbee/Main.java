@@ -16,9 +16,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.util.List;
 import java.util.Locale;
 
 public class Main extends ActionBarActivity {
@@ -30,6 +31,9 @@ public class Main extends ActionBarActivity {
     private DialogFragment about;
     private DialogFragment help;
     private TextToSpeech tts;
+    private int score;
+    private TextView scoreView;
+    private EditText guessText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,24 +51,24 @@ public class Main extends ActionBarActivity {
                 }
             }
         });
-        List<TextToSpeech.EngineInfo> engines = tts.getEngines();
-        for (TextToSpeech.EngineInfo engine : engines){
-            Log.v(TAG, engine.label);
-        }
+        score = 0;
+        scoreView = (TextView) findViewById(R.id.tv_score);
+        guessText = (EditText) findViewById(R.id.et_guess);
         setContentView(R.layout.main_layout);
         Intent intent = new Intent(this,WordService.class);
         bindService(intent, wordServiceConnection, Context.BIND_AUTO_CREATE);
+        newGame(findViewById(R.id.btn_new));
     } //onCreate
 
     @Override
-    public void onPause(){
-        Log.v(TAG, "Pause");
+    public void onDestroy(){
+        Log.v(TAG, "Destroy");
         if(tts !=null){
             tts.stop();
             tts.shutdown();
         }
         wordService.cancelGetRandomWord();
-        super.onPause();
+        super.onDestroy();
     } //onPause
 
     @Override
@@ -97,19 +101,49 @@ public class Main extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     } //onOptionsItemSelected
 
-    public void showWord(View view) {
-        Log.v(TAG, "showWord");
+    public void sayWord(View view){
+        Log.v(TAG, "Say: " + wordService.word);
         if(!tts.isSpeaking()) {
-            String wd = wordService.getRandomWord();
-            TextView myTextView = (TextView) findViewById(R.id.myTextView);
-            myTextView.setText(wd);
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                tts.speak(wd, TextToSpeech.QUEUE_FLUSH, null);
+                tts.speak(wordService.word, TextToSpeech.QUEUE_FLUSH, null);
             } else {
-                tts.speak(wd, TextToSpeech.QUEUE_FLUSH, null, "speak");
+                tts.speak(wordService.word, TextToSpeech.QUEUE_FLUSH, null, "speak");
             } //if else
-        } //if
-    } //showWord
+        }
+    } //sayWord
+
+    public void guessWord(View view){
+        String guess = guessText.getText().toString();
+        guess = guess.replaceAll("\\s+", "");
+        Log.v(TAG, "Guess: " + guess);
+        if(guess.equalsIgnoreCase(wordService.word)){
+            score += 1;
+            scoreView.setText("Score: " + String.valueOf(score));
+            nextWord();
+        } else {
+            //TODO
+        }
+    }  //guessWord
+
+    public void giveUp(View view){
+        Log.v(TAG, "giveUp");
+        Toast.makeText(getApplicationContext(),wordService.word,Toast.LENGTH_LONG).show();
+        nextWord();
+    } //giveUp
+
+    public void newGame(View view){
+        Log.v(TAG, "newGame");
+        score = 0;
+        scoreView.setText("Score: " + String.valueOf(score));
+        guessText.setText("");
+        nextWord();
+    } //newGame
+
+    public void nextWord() {
+        Log.v(TAG, "nextWord");
+        wordService.getRandomWord();
+        sayWord(findViewById(R.id.btn_say));
+    } //nextWord
 
     private ServiceConnection wordServiceConnection = new ServiceConnection() {
 
