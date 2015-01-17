@@ -12,13 +12,46 @@
         About body <!--TODO-->
     </string>
     <string name="msg_help">
-        \'Score: x\' - x is the number of words you guessed correct
-        \'Say Word\' - speaks the word again
-        \'Give Up\' - <!--TODO-->
+        \'Score: x\' - x is the number of correct guesses\n\r
+        \'Accuracy: x%\' - x is percentage of correct guesses\n\r
+        \'Say Word\' - speaks the word again\n\r
+        \'Guess\' - guess the word you typed\n\r
+        \'Give Up\' - skip a word\n\r
+        \'New Game\' - start over
     </string>
 
     <string name="speech">Speech</string>
+    <string name="words">Words</string>
     <string name="difficulty">Difficulty</string>
-    <string name="theme">Theme</string>
+
+    <string-array name="difficultyEntries">
+        <item name="Easy">Easy</item>
+        <item name="Medium">Medium</item>
+        <item name="Hard">Hard</item>
+    </string-array>
+
+    <string-array name="difficultyEntryValues">
+        <item name="Easy">Easy</item>
+        <item name="Medium">Medium</item>
+        <item name="Hard">Hard</item>
+    </string-array>
+
+    <string name="pitch_slider_title">Pitch</string>
+    <string-array name="pitch_slider_summaries">
+        <item>Low</item>
+        <item>Normal</item>
+        <item>High</item>
+    </string-array>
+    <item name="pitch_slider_default" format="float" type="string">0.5</item>
+    <string name="pitch_slider_message">Optional message displayed in the dialog above the slider</string>
+
+    <string name="speed_slider_title">Speech Rate</string>
+    <string-array name="speed_slider_summaries">
+        <item>Slow</item>
+        <item>Normal</item>
+        <item>Fast</item>
+    </string-array>
+    <item name="speed_slider_default" format="float" type="string">0.5</item>
+    <string name="speed_slider_message">Optional message displayed in the dialog above the slider</string>
 
 </resources>

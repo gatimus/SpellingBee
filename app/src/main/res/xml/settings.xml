@@ -4,19 +4,30 @@
     <PreferenceCategory
         android:title="@string/speech"
         android:key="pref_speech">
-
-
+        <net.jayschwa.android.preference.SliderPreference
+            android:key="pref_pitch"
+            android:title="@string/pitch_slider_title"
+            android:summary="@array/pitch_slider_summaries"
+            android:defaultValue="@string/pitch_slider_default"
+            android:dialogMessage="@string/pitch_slider_message" />
+        <net.jayschwa.android.preference.SliderPreference
+            android:key="pref_speed"
+            android:title="@string/speed_slider_title"
+            android:summary="@array/speed_slider_summaries"
+            android:defaultValue="@string/speed_slider_default"
+            android:dialogMessage="@string/speed_slider_message" />
     </PreferenceCategory>
 
-    <ListPreference
-        android:title="@string/difficulty"
-        android:key="pref_difficulty">
+    <PreferenceCategory
+        android:title="@string/words"
+        android:key="pref_words">
+        <ListPreference
+            android:title="@string/difficulty"
+            android:key="pref_difficulty"
+            android:entries="@array/difficultyEntries"
+            android:entryValues="@array/difficultyEntryValues"
+            android:defaultValue="Medium">
         </ListPreference>
-
-    <ListPreference
-        android:title="@string/theme"
-        android:key="pref_theme">
-        </ListPreference>
-
+    </PreferenceCategory>
 
 </PreferenceScreen>

@@ -6,10 +6,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -26,19 +28,27 @@ public class Main extends ActionBarActivity {
 
     private static final String TAG = "Main";
     private WordService wordService;
+    private SharedPreferences sharedPreferences;
     private Resources res;
     private FragmentManager fragMan;
     private DialogFragment about;
     private DialogFragment help;
     private TextToSpeech tts;
     private int score;
+    private int guesses;
+    private float accuracy;
     private TextView scoreView;
+    private TextView accuracyView;
     private EditText guessText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "Create");
+        setContentView(R.layout.main_layout);
+        Intent intent = new Intent(this,WordService.class);
+        bindService(intent, wordServiceConnection, Context.BIND_AUTO_CREATE);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         res = getApplicationContext().getResources();
         fragMan = this.getFragmentManager();
         about = new About();
@@ -52,12 +62,11 @@ public class Main extends ActionBarActivity {
             }
         });
         score = 0;
+        guesses = 0;
+        accuracy = 0;
         scoreView = (TextView) findViewById(R.id.tv_score);
+        accuracyView = (TextView) findViewById(R.id.tv_accuracy);
         guessText = (EditText) findViewById(R.id.et_guess);
-        setContentView(R.layout.main_layout);
-        Intent intent = new Intent(this,WordService.class);
-        bindService(intent, wordServiceConnection, Context.BIND_AUTO_CREATE);
-        newGame(findViewById(R.id.btn_new));
     } //onCreate
 
     @Override
@@ -103,45 +112,57 @@ public class Main extends ActionBarActivity {
 
     public void sayWord(View view){
         Log.v(TAG, "Say: " + wordService.word);
-        if(!tts.isSpeaking()) {
-            if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                tts.speak(wordService.word, TextToSpeech.QUEUE_FLUSH, null);
-            } else {
-                tts.speak(wordService.word, TextToSpeech.QUEUE_FLUSH, null, "speak");
-            } //if else
-        }
+        float pitch = sharedPreferences.getFloat("pref_pitch", 0.5F)+0.5F;
+        float speed = sharedPreferences.getFloat("pref_speed", 0.5F)+0.5F;
+        tts.setPitch(pitch);
+        tts.setSpeechRate(speed);
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            tts.speak(wordService.word, TextToSpeech.QUEUE_FLUSH, null);
+        } else {
+            tts.speak(wordService.word, TextToSpeech.QUEUE_FLUSH, null, "speak");
+        } //if else
     } //sayWord
 
     public void guessWord(View view){
         String guess = guessText.getText().toString();
         guess = guess.replaceAll("\\s+", "");
         Log.v(TAG, "Guess: " + guess);
+        guesses += 1;
         if(guess.equalsIgnoreCase(wordService.word)){
             score += 1;
             scoreView.setText("Score: " + String.valueOf(score));
+            Toast.makeText(getApplicationContext(), guess + ": Correct!", Toast.LENGTH_SHORT).show();
             nextWord();
         } else {
-            //TODO
+            Toast.makeText(getApplicationContext(), guess + ": Guess again :(", Toast.LENGTH_SHORT).show();
         }
+        accuracy = (float)score/guesses;
+        accuracyView.setText("Accuracy: " + String.valueOf(Math.round(accuracy*100)) + "%");
     }  //guessWord
 
     public void giveUp(View view){
         Log.v(TAG, "giveUp");
-        Toast.makeText(getApplicationContext(),wordService.word,Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(),"The word was " + wordService.word,Toast.LENGTH_SHORT).show();
         nextWord();
     } //giveUp
 
     public void newGame(View view){
         Log.v(TAG, "newGame");
         score = 0;
+        guesses = 0;
+        accuracy = 0;
         scoreView.setText("Score: " + String.valueOf(score));
+        accuracyView.setText("Accuracy: " + String.valueOf(0) + "%");
         guessText.setText("");
+        Toast.makeText(getApplicationContext(), "New Game", Toast.LENGTH_SHORT).show();
         nextWord();
     } //newGame
 
     public void nextWord() {
         Log.v(TAG, "nextWord");
+        guessText.setText("");
         wordService.getRandomWord();
+        Toast.makeText(getApplicationContext(), "New Word", Toast.LENGTH_SHORT).show();
         sayWord(findViewById(R.id.btn_say));
     } //nextWord
 
@@ -153,6 +174,7 @@ public class Main extends ActionBarActivity {
             Log.v(TAG, "ServiceConnected");
             WordService.WordServiceLocalBinder binder = (WordService.WordServiceLocalBinder) service;
             wordService = binder.getService();
+            newGame(findViewById(R.id.btn_new));
         } //onServiceConnected
 
         public void onServiceDisconnected(ComponentName arg0) {

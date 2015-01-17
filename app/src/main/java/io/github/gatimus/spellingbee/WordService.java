@@ -2,13 +2,17 @@ package io.github.gatimus.spellingbee;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
+
 import com.wordnik.client.api.WordsApi;
 import com.wordnik.client.common.ApiException;
 import com.wordnik.client.model.WordObject;
+
 import java.util.concurrent.ExecutionException;
 
 public class WordService extends Service {
@@ -19,6 +23,7 @@ public class WordService extends Service {
     private final IBinder wordServiceBinder = new WordServiceLocalBinder();
     private RandomWord randomWord;
     private WordsApi wordsApi;
+    private SharedPreferences sharedPreferences;
 
     public String word;
 
@@ -28,11 +33,13 @@ public class WordService extends Service {
         wordsApi = new WordsApi();
         wordsApi.addHeader("api_key", KEY);
         word = "";
+
     } //constructor
 
     @Override
     public IBinder onBind(Intent arg0) {
         Log.v(TAG, "onBind");
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         return wordServiceBinder;
     } //onBind
 
@@ -47,7 +54,7 @@ public class WordService extends Service {
     public String getRandomWord() {
         Log.v(TAG, "getRandomWord");
         randomWord = new RandomWord();
-        randomWord.execute();
+        randomWord.execute(sharedPreferences.getString("pref_difficulty", "Medium"));
         try {
             word = randomWord.get().getWord();
         } catch (InterruptedException e) {
@@ -65,7 +72,7 @@ public class WordService extends Service {
         return randomWord.isCancelled();
     } //cancelGetRandomWord
 
-    public class RandomWord extends AsyncTask<Void, String, WordObject> {
+    public class RandomWord extends AsyncTask<String, String, WordObject> {
 
         private final static String TAG = "RandomWord";
 
@@ -77,12 +84,25 @@ public class WordService extends Service {
         } //onPreExecute
 
         @Override
-        protected WordObject doInBackground(Void... prams) {
+        protected WordObject doInBackground(String... prams) {
             Log.v(TAG, "doInBackground");
             publishProgress("start");
             WordObject wordObject = new WordObject();
             try {
-                wordObject = wordsApi.getRandomWord(null, null, "true", 1_000_000, -1, 1, -1, 0, 5);
+                switch (prams[0]){
+                    case "Easy":
+                        wordObject = wordsApi.getRandomWord(null, null, "true", 1_000_000, -1, 1, -1, 1, 4);
+                        break;
+                    case "Medium":
+                        wordObject = wordsApi.getRandomWord(null, null, "true", 100_000, -1, 1, -1, 2, 6);
+                        break;
+                    case "Hard":
+                        wordObject = wordsApi.getRandomWord(null, null, "true", 10_000, -1, 1, -1, 4, 10);
+                        break;
+                    default:
+                        wordObject = wordsApi.getRandomWord(null, null, "true", 1_000_000, -1, 1, -1, 2, 6);
+                        break;
+                }
             } catch (ApiException e) {
                 Log.e(TAG, e.toString());
                 publishProgress(e.toString());
